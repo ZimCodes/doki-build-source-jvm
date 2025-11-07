@@ -18,22 +18,26 @@ object CommonConstructionFunctions {
     .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
     .setPrettyPrinting().create()
 
-  private fun<T: HasId> getAllProductDefinitions(productBuildSourceDirectory: Path,dokiProduct: DokiProduct,clazz:Class<T>): Map<String,T>{
-      return Files.walk(productBuildSourceDirectory)
-        .filter { !Files.isDirectory(it) }
-        .filter { it.fileName.toString().endsWith("${dokiProduct.value}.definition.json") }
-        .map { Files.newInputStream(it) }
-        .map {
-          gson.fromJson(
-            InputStreamReader(it, StandardCharsets.UTF_8),
-            clazz
-          )
-        }.collect(
-          Collectors.toMap(
-            { it.id },
-            { it }
-          )
+  private fun <T : HasId> getAllProductDefinitions(
+    productBuildSourceDirectory: Path,
+    dokiProduct: DokiProduct,
+    clazz: Class<T>
+  ): Map<String, T> {
+    return Files.walk(productBuildSourceDirectory)
+      .filter { !Files.isDirectory(it) }
+      .filter { it.fileName.toString().endsWith("${dokiProduct.value}.definition.json") }
+      .map { Files.newInputStream(it) }
+      .map {
+        gson.fromJson(
+          InputStreamReader(it, StandardCharsets.UTF_8),
+          clazz
         )
+      }.collect(
+        Collectors.toMap(
+          { it.id },
+          { it }
+        )
+      )
   }
 
   fun <T : HasId> getAllDokiThemeDefinitions(
@@ -42,7 +46,7 @@ object CommonConstructionFunctions {
     masterThemeDirectory: Path,
     clazz: Class<T>
   ): Stream<Triple<Path, MasterThemeDefinition, T>> {
-    val allProductDefinitions = getAllProductDefinitions(productBuildSourceDirectory,dokiProduct,clazz)
+    val allProductDefinitions = getAllProductDefinitions(productBuildSourceDirectory, dokiProduct, clazz)
     val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
     return Files.walk(masterThemeDefinitionPath)
       .filter { !Files.isDirectory(it) }
@@ -66,15 +70,37 @@ object CommonConstructionFunctions {
         Triple(productDefinitionDefinitionPath, masterThemeDefinition, productDefinition)
       }
   }
+  private fun <T : HasId> getJetProductDefinitions(
+    productBuildSourceDirectory: Path,
+    dokiProduct: DokiProduct,
+    clazz: Class<T>,
+    variantName: String
+  ): Map<String, T> {
+    return Files.walk(productBuildSourceDirectory)
+      .filter { !Files.isDirectory(it) }
+      .filter { it.fileName.toString().endsWith("$variantName.${dokiProduct.value}.definition.json") }
+      .map { Files.newInputStream(it) }
+      .map {
+        gson.fromJson(
+          InputStreamReader(it, StandardCharsets.UTF_8),
+          clazz
+        )
+      }.collect(
+        Collectors.toMap(
+          { it.id },
+          { it }
+        )
+      )
+  }
 
   fun <T : HasId> getAllJetbrainsDefinitions(
     dokiProduct: DokiProduct,
     productBuildSourceDirectory: Path,
     masterThemeDirectory: Path,
     clazz: Class<T>,
-    variantNames: Set<String>
-  ): Stream<Triple<Path, MasterThemeDefinition, Map<String, T>>> {
-    val allProductDefinitions = getAllProductDefinitions(productBuildSourceDirectory,dokiProduct,clazz)
+    variantName: String
+  ): Stream<Triple<Path, MasterThemeDefinition, T>> {
+    val allProductDefinitions = getJetProductDefinitions(productBuildSourceDirectory, dokiProduct, clazz,variantName)
     val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
     return Files.walk(masterThemeDefinitionPath)
       .filter { !Files.isDirectory(it) }
@@ -89,13 +115,14 @@ object CommonConstructionFunctions {
           InputStreamReader(it.second, StandardCharsets.UTF_8),
           MasterThemeDefinition::class.java
         )
-        val variantDefinitions = variantNames.associateWith { name ->
-          val key = masterThemeDefinition.id + name
-          (allProductDefinitions[key] ?: throw IllegalArgumentException("""
-              doki-build-plugin/assets/themes,'${masterThemeDefinition.displayName}', is missing a ${if(name == "") "darcula" else name} variant definition file!
-            """.trimIndent()))
-        }
-        Triple(productDefinitionDefinitionPath, masterThemeDefinition, variantDefinitions)
+        val key = masterThemeDefinition.id + if(variantName == "darcula") "" else variantName
+        val variantDefinition = (allProductDefinitions[key] ?: throw IllegalArgumentException(
+          """
+              doki-build-plugin/assets/themes,'${masterThemeDefinition.displayName}', is missing a $variantName variant definition file!
+            """.trimIndent()
+        ))
+
+        Triple(productDefinitionDefinitionPath, masterThemeDefinition, variantDefinition)
       }
   }
 }
