@@ -1,18 +1,19 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.8.21"
+  alias(libs.plugins.kotlin)
   id("java-library")
   id("maven-publish")
-  // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
-  id("org.jlleitschuh.gradle.ktlint") version "11.3.2"
 }
 
-group = "io.unthrottled.doki.build.jvm"
-version = "88.0.6"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
 java {
   withSourcesJar()
+}
+
+kotlin {
+  jvmToolchain(providers.gradleProperty("jvmVersion").get().toInt())
 }
 
 repositories {
@@ -21,16 +22,7 @@ repositories {
 }
 
 dependencies {
-  testImplementation(kotlin("test"))
-  api("com.google.code.gson:gson:2.10.1")
-}
-
-tasks.test {
-  useJUnitPlatform()
-}
-
-tasks.withType<KotlinCompile> {
-  kotlinOptions.jvmTarget = "17"
+  api(libs.gson)
 }
 
 publishing {

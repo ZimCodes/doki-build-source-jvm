@@ -1,8 +1,9 @@
 package io.unthrottled.doki.build.jvm.models
 
 typealias StringDictionary<T> = Map<String, T>
+
 data class SchemaDefinition(
-  val required: List<String>?
+  val required: List<String>?,
 )
 
 data class ThemeDefinitionSchema(
@@ -58,6 +59,7 @@ data class BackgroundDefinition(
   val position: String?,
   val opacity: Int?
 )
+
 data class BackgroundsDefinition(
   val default: BackgroundDefinition?,
   val secondary: BackgroundDefinition?
@@ -66,6 +68,7 @@ data class BackgroundsDefinition(
 interface HasId {
   val id: String
 }
+
 interface HasColors {
   val colors: StringDictionary<String>
 }
