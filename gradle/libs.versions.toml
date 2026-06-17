@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.3.20"
-gson = "2.13.2"
+kotlin = "2.4.0"
+gson = "2.14.0"
 
 [libraries]
 gson = {module = "com.google.code.gson:gson", version.ref = "gson"}
