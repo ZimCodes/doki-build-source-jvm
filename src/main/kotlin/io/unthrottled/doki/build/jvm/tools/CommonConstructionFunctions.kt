@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import io.unthrottled.doki.build.jvm.models.HasId
 import io.unthrottled.doki.build.jvm.models.MasterThemeDefinition
+import io.unthrottled.doki.build.jvm.models.Quad
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -22,7 +23,7 @@ object CommonConstructionFunctions {
     productBuildSourceDirectory: Path,
     masterThemeDirectory: Path,
     clazz: Class<T>
-  ): Stream<Triple<Path, MasterThemeDefinition, T>> {
+  ): Stream<Quad<Path, MasterThemeDefinition, T, T>> {
     val allProductDefinitions =
       Files.walk(productBuildSourceDirectory)
         .filter { !Files.isDirectory(it) }
@@ -60,7 +61,10 @@ object CommonConstructionFunctions {
             Master Theme ${masterThemeDefinition.displayName} is missing the ${dokiProduct.prettyName} definition file!
             """.trimIndent()
           )
-        Triple(productDefinitionDefinitionPath, masterThemeDefinition, productDefinition)
+        val islandsProductDefinition = allProductDefinitions[masterThemeDefinition.id + 'I'] ?: throw IllegalArgumentException("""
+          doki-build-plugin/assets/themes,'${masterThemeDefinition.displayName}', is missing an Islands variant!
+        """.trimIndent())
+        Quad(productDefinitionDefinitionPath, masterThemeDefinition, productDefinition, islandsProductDefinition)
       }
   }
 }
