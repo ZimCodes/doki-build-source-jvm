@@ -76,6 +76,7 @@ interface HasColors {
 // todo: move these to the apps they support
 data class JetbrainsAppDefinition(
   override val id: String,
+  val parentTheme: String?,
   val editorScheme: StringDictionary<Any>,
   val overrides: Overrides?,
   val backgrounds: BackgroundsDefinition?,
@@ -118,6 +119,7 @@ data class JetbrainsThemeDefinition(
   val displayName: String?,
   val dark: Boolean,
   val author: String?,
+  val parentTheme: String?,
   val editorScheme: String,
   val group: String,
   val stickers: JetbrainsStickers,

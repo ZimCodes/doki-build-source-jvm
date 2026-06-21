@@ -17,14 +17,8 @@ object CommonConstructionFunctions {
     .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
     .setPrettyPrinting().create()
 
-  fun <T : HasId> getAllDokiThemeDefinitions(
-    dokiProduct: DokiProduct,
-    productBuildSourceDirectory: Path,
-    masterThemeDirectory: Path,
-    clazz: Class<T>
-  ): Stream<Triple<Path, MasterThemeDefinition, T>> {
-    val allProductDefinitions =
-      Files.walk(productBuildSourceDirectory)
+  private fun<T: HasId> getAllProductDefinitions(productBuildSourceDirectory: Path,dokiProduct: DokiProduct,clazz:Class<T>): Map<String,T>{
+      return Files.walk(productBuildSourceDirectory)
         .filter { !Files.isDirectory(it) }
         .filter { it.fileName.toString().endsWith("${dokiProduct.value}.definition.json") }
         .map { Files.newInputStream(it) }
@@ -39,7 +33,15 @@ object CommonConstructionFunctions {
             { it }
           )
         )
+  }
 
+  fun <T : HasId> getAllDokiThemeDefinitions(
+    dokiProduct: DokiProduct,
+    productBuildSourceDirectory: Path,
+    masterThemeDirectory: Path,
+    clazz: Class<T>
+  ): Stream<Triple<Path, MasterThemeDefinition, T>> {
+    val allProductDefinitions = getAllProductDefinitions(productBuildSourceDirectory,dokiProduct,clazz)
     val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
     return Files.walk(masterThemeDefinitionPath)
       .filter { !Files.isDirectory(it) }
@@ -61,6 +63,38 @@ object CommonConstructionFunctions {
             """.trimIndent()
           )
         Triple(productDefinitionDefinitionPath, masterThemeDefinition, productDefinition)
+      }
+  }
+
+  fun <T : HasId> getAllJetbrainsDefinitions(
+    dokiProduct: DokiProduct,
+    productBuildSourceDirectory: Path,
+    masterThemeDirectory: Path,
+    clazz: Class<T>,
+    variantNames: Set<String>
+  ): Stream<Triple<Path, MasterThemeDefinition, Map<String, T>>> {
+    val allProductDefinitions = getAllProductDefinitions(productBuildSourceDirectory,dokiProduct,clazz)
+    val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
+    return Files.walk(masterThemeDefinitionPath)
+      .filter { !Files.isDirectory(it) }
+      .filter { it.fileName.toString().endsWith("master.definition.json") }
+      .map { it to Files.newInputStream(it) }
+      .map {
+        val masterThemePath = it.first.toString()
+        val masterFileDefinition = masterThemePath.substringAfter("$masterThemeDefinitionPath")
+        val productDefinitionDefinitionPath =
+          Paths.get(productBuildSourceDirectory.toString(), masterFileDefinition)
+        val masterThemeDefinition = gson.fromJson(
+          InputStreamReader(it.second, StandardCharsets.UTF_8),
+          MasterThemeDefinition::class.java
+        )
+        val variantDefinitions = variantNames.associateWith { name ->
+          val key = masterThemeDefinition.id + name
+          (allProductDefinitions[key] ?: throw IllegalArgumentException("""
+              doki-build-plugin/assets/themes,'${masterThemeDefinition.displayName}', is missing a ${if(name == "") "darcula" else name} variant definition file!
+            """.trimIndent()))
+        }
+        Triple(productDefinitionDefinitionPath, masterThemeDefinition, variantDefinitions)
       }
   }
 }
