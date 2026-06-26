@@ -73,6 +73,16 @@ interface HasColors {
   val colors: StringDictionary<String>
 }
 
+// Note: for templates found in 'doki-build-plugin/assets/themes'
+data class DokiThemeTemplate(
+  override val id: String,
+  val parentTheme: String?,
+  val editorScheme: StringDictionary<Any>,
+  val overrides: Overrides?,
+  val ui: StringDictionary<Any>,
+  val uiBase: String?,
+) : HasId
+
 // todo: move these to the apps they support
 data class JetbrainsAppDefinition(
   override val id: String,
