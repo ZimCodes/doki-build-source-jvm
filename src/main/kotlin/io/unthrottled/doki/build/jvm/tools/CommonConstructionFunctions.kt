@@ -70,15 +70,25 @@ object CommonConstructionFunctions {
         Triple(productDefinitionDefinitionPath, masterThemeDefinition, productDefinition)
       }
   }
+
+  private fun getFileSuffix(dokiProductName: String, variantName: String, includeVariantType: Boolean): String = when {
+    variantName.startsWith("custom") -> {
+      val variantSplit = variantName.split("-".toPattern()) // Ex [custom,variant]
+      val variantName = variantSplit[0] // Ex: custom
+      val variantType = variantSplit[1] // Ex: variant
+      if (includeVariantType) "$variantName.$variantType.${dokiProductName}.definition.json" else "$variantName.${dokiProductName}.definition.json"
+    }
+    else -> "$variantName.${dokiProductName}.definition.json"
+  }
+
   private fun <T : HasId> getJetProductDefinitions(
     productBuildSourceDirectory: Path,
-    dokiProduct: DokiProduct,
     clazz: Class<T>,
-    variantName: String
+    suffix: String
   ): Map<String, T> {
     return Files.walk(productBuildSourceDirectory)
       .filter { !Files.isDirectory(it) }
-      .filter { it.fileName.toString().endsWith("$variantName.${dokiProduct.value}.definition.json") }
+      .filter { it.fileName.toString().endsWith(suffix) }
       .map { Files.newInputStream(it) }
       .map {
         gson.fromJson(
@@ -100,11 +110,11 @@ object CommonConstructionFunctions {
     clazz: Class<T>,
     variantName: String
   ): Stream<Triple<Path, MasterThemeDefinition, T>> {
-    val allProductDefinitions = getJetProductDefinitions(productBuildSourceDirectory, dokiProduct, clazz,variantName)
+    val allVariantDefinitions = getJetProductDefinitions(productBuildSourceDirectory, clazz, getFileSuffix(dokiProduct.value,variantName,true))
     val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
     return Files.walk(masterThemeDefinitionPath)
       .filter { !Files.isDirectory(it) }
-      .filter { it.fileName.toString().endsWith("master.definition.json") }
+      .filter { it.fileName.toString().endsWith(getFileSuffix("master",variantName, false)) }
       .map { it to Files.newInputStream(it) }
       .map {
         val masterThemePath = it.first.toString()
@@ -115,8 +125,8 @@ object CommonConstructionFunctions {
           InputStreamReader(it.second, StandardCharsets.UTF_8),
           MasterThemeDefinition::class.java
         )
-        val key = masterThemeDefinition.id + if(variantName == "darcula") "" else variantName
-        val variantDefinition = (allProductDefinitions[key] ?: throw IllegalArgumentException(
+        val key = masterThemeDefinition.id + if (variantName == "darcula" || variantName.startsWith("custom")) "" else variantName
+        val variantDefinition = (allVariantDefinitions[key] ?: throw IllegalArgumentException(
           """
               doki-build-plugin/assets/themes,'${masterThemeDefinition.displayName}', is missing a $variantName variant definition file!
             """.trimIndent()
