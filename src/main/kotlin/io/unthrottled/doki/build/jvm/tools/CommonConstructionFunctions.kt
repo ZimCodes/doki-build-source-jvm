@@ -90,6 +90,13 @@ object CommonConstructionFunctions {
     false
   }
 
+  private fun removeJetbrainsDir(path: Path, fileName: Path): Path {
+    if (!path.parent.endsWith("jetbrains")) {
+      return path;
+    }
+    return path.parent.resolveSibling(fileName)
+  }
+
   private fun <T : HasId> getJetProductDefinitions(
     productBuildSourceDirectory: Path,
     clazz: Class<T>,
@@ -127,13 +134,13 @@ object CommonConstructionFunctions {
     val masterThemeDefinitionPath = Paths.get(masterThemeDirectory.toString(), "definitions")
     return Files.walk(masterThemeDefinitionPath)
       .filter { !Files.isDirectory(it) }
-      .filter {endsWithMaster(it.fileName.toString(),variantName)}
+      .filter { endsWithMaster(it.fileName.toString(), variantName) }
       .map { it to Files.newInputStream(it) }
       .map {
         val masterThemePath = it.first.toString()
         val masterFileDefinition = masterThemePath.substringAfter("$masterThemeDefinitionPath")
         val productDefinitionDefinitionPath =
-          Paths.get(productBuildSourceDirectory.toString(), masterFileDefinition)
+          removeJetbrainsDir(Paths.get(productBuildSourceDirectory.toString(), masterFileDefinition), it.first.fileName)
         val masterThemeDefinition = gson.fromJson(
           InputStreamReader(it.second, StandardCharsets.UTF_8),
           MasterThemeDefinition::class.java
