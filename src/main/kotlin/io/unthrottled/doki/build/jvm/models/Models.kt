@@ -73,28 +73,6 @@ interface HasColors {
   val colors: StringDictionary<String>
 }
 
-// Note: for templates found in 'doki-build-plugin/assets/themes'
-data class DokiThemeTemplate(
-  override val id: String,
-  val parentTheme: String?,
-  val editorScheme: StringDictionary<Any>,
-  val overrides: Overrides?,
-  val ui: StringDictionary<Any>,
-  val uiBase: String?,
-) : HasId
-
-// todo: move these to the apps they support
-data class JetbrainsAppDefinition(
-  override val id: String,
-  val parentTheme: String?,
-  val editorScheme: StringDictionary<Any>,
-  val overrides: Overrides?,
-  val backgrounds: BackgroundsDefinition?,
-  val ui: StringDictionary<Any>,
-  val uiBase: String?,
-  val icons: StringDictionary<Any>
-) : HasId
-
 // todo: move these to the apps they support
 data class IconsAppDefinition(
   override val id: String,
@@ -122,20 +100,3 @@ data class MasterThemeDefinition(
     get() = group.replace(' ', '_')
       .replace(":", "")
 }
-
-data class JetbrainsThemeDefinition(
-  val id: String,
-  val name: String,
-  val displayName: String?,
-  val dark: Boolean,
-  val author: String?,
-  val parentTheme: String?,
-  val editorScheme: String,
-  val group: String,
-  val stickers: JetbrainsStickers,
-  val backgrounds: Backgrounds,
-  val colors: StringDictionary<Any>,
-  val ui: StringDictionary<Any>,
-  val icons: StringDictionary<Any>,
-  val meta: StringDictionary<String>
-)
