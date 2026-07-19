@@ -73,13 +73,6 @@ interface HasColors {
   val colors: StringDictionary<String>
 }
 
-// todo: move these to the apps they support
-data class IconsAppDefinition(
-  override val id: String,
-  val overrides: StringDictionary<Any>,
-  override val colors: StringDictionary<String>
-) : HasId, HasColors
-
 data class MasterThemeDefinition(
   val id: String,
   val name: String,
