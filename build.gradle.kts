@@ -23,6 +23,7 @@ repositories {
 
 dependencies {
   api(libs.gson)
+  implementation(localGroovy())
 }
 
 publishing {
